@@ -1,6 +1,6 @@
 # Dockerized Node.js Application on AWS EC2
 
-A simple Node.js web application containerized with Docker and deployed on an Amazon EC2 Ubuntu instance. The Docker image is published on Docker Hub, demonstrating a complete container deployment workflow.
+A production-style deployment of a Dockerized Node.js web application on an Amazon EC2 instance. The application is containerized using Docker, deployed on Ubuntu, and made accessible over the internet through an EC2 public IP.
 
 ---
 
@@ -8,45 +8,48 @@ A simple Node.js web application containerized with Docker and deployed on an Am
 
 This project demonstrates how to:
 
-- Launch an Amazon EC2 Ubuntu instance
-- Connect securely using SSH
-- Install and configure Docker
 - Build a Docker image for a Node.js application
-- Run the application inside a Docker container
-- Expose the application to the internet
-- Publish the Docker image to Docker Hub
+- Deploy the container on an AWS EC2 Ubuntu instance
+- Configure security groups for web traffic
+- Access the application through a browser
+- Manage Docker containers on Linux
+- Push the project to GitHub with documentation
 
 ---
 
 ## Architecture
 
-```
-                +------------------+
-                |    Developer     |
-                +------------------+
-                         |
-                         | Git / SSH
-                         |
-                         ▼
-              +----------------------+
-              |   AWS EC2 (Ubuntu)   |
-              +----------------------+
-                         |
-                  Docker Engine
-                         |
-                         ▼
-              +----------------------+
-              | Node.js Docker Image |
-              +----------------------+
-                         |
-                         ▼
-              +----------------------+
-              | Docker Container     |
-              | Port 3000            |
-              +----------------------+
-                         |
-                         ▼
-                 Web Browser
+```text
+                    +----------------------+
+                    |      Developer       |
+                    |  VS Code + GitHub    |
+                    +----------+-----------+
+                               |
+                               |
+                               v
+                     Docker Build Image
+                               |
+                               v
+                    +----------------------+
+                    |   Docker Image       |
+                    +----------+-----------+
+                               |
+                               |
+                               v
+                    Amazon EC2 (Ubuntu 24.04)
+                 +-----------------------------+
+                 |        Docker Engine        |
+                 |                             |
+                 |  Node.js Container          |
+                 |      Port 3000              |
+                 +-------------+---------------+
+                               |
+                               |
+                     Security Group (3000)
+                               |
+                               |
+                               v
+                        Web Browser
 ```
 
 ---
@@ -58,7 +61,9 @@ This project demonstrates how to:
 - Docker
 - Node.js
 - Git
-- Docker Hub
+- GitHub
+- PowerShell
+- VS Code
 
 ---
 
@@ -67,38 +72,70 @@ This project demonstrates how to:
 ```
 docker-nodejs-ec2/
 │
-├── app.js
-├── package.json
+├── app/
+│   ├── package.json
+│   ├── server.js
+│   └── public/
+│       ├── index.html
+│       ├── styles.css
+│       └── script.js
+│
+├── Screenshots/
+│   ├── EC2.jpg
+│   ├── ssh terminal.jpg
+│   ├── docker images.jpg
+│   ├── docker ps.jpg
+│   ├── browser showing app.jpg
+│   └── docker repository.jpg
+│
 ├── Dockerfile
+├── .dockerignore
 ├── .gitignore
-├── README.md
-└── screenshots/
-    ├── browser.png
-    ├── docker-build.png
-    ├── docker-running.png
-    ├── dockerhub.png
-    └── ec2-instance.png
+└── README.md
 ```
 
 ---
 
-## Dockerfile
+## Deployment Steps
 
-```dockerfile
-FROM node:22-alpine
+### 1. Launch EC2 Instance
 
-WORKDIR /app
+- Ubuntu 24.04 LTS
+- t3.micro
+- Configure Security Group
+  - SSH (22)
+  - HTTP (80)
+  - Custom TCP (3000)
 
-COPY . .
+---
 
-EXPOSE 3000
+### 2. Connect via SSH
 
-CMD ["npm", "start"]
+```bash
+ssh -i docker-nodejs-key.pem ubuntu@<EC2-Public-IP>
 ```
 
 ---
 
-## Build the Docker Image
+### 3. Install Docker
+
+```bash
+sudo apt update
+
+sudo apt install docker.io -y
+
+sudo systemctl enable docker
+
+sudo systemctl start docker
+
+sudo usermod -aG docker ubuntu
+```
+
+Reconnect to activate Docker permissions.
+
+---
+
+### 4. Build Docker Image
 
 ```bash
 docker build -t docker-nodejs-app .
@@ -106,13 +143,23 @@ docker build -t docker-nodejs-app .
 
 ---
 
-## Run the Container
+### 5. Verify Image
+
+```bash
+docker images
+```
+
+---
+
+### 6. Run Container
 
 ```bash
 docker run -d -p 3000:3000 --name node-app docker-nodejs-app
 ```
 
-Verify the container:
+---
+
+### 7. Verify Running Container
 
 ```bash
 docker ps
@@ -120,91 +167,72 @@ docker ps
 
 ---
 
-## Test the Application
-
-From the EC2 instance:
+### 8. Test Locally
 
 ```bash
 curl http://localhost:3000
 ```
 
-Expected output:
+---
 
-```html
-<h1>Docker Node.js App</h1>
-<p>Successfully deployed on AWS EC2 using Docker!</p>
+### 9. Access Application
+
 ```
+http://<EC2-Public-IP>:3000
+```
+
+---
+
+# Screenshots
+
+## EC2 Instance
+
+![EC2](Screenshots/EC2.jpg)
+
+---
+
+## SSH Connection
+
+![SSH](Screenshots/ssh%20terminal.jpg)
+
+---
+
+## Docker Images
+
+![Docker Images](Screenshots/docker%20images.jpg)
+
+---
+
+## Running Container
+
+![Docker PS](Screenshots/docker%20ps.jpg)
+
+---
+
+## Application Running
+
+![Application](Screenshots/browser%20showing%20app.jpg)
 
 ---
 
 ## Docker Hub Repository
 
-Docker Image:
-
-```text
-tevinportfolio/docker-nodejs-app
-```
-
-Pull the image:
-
-```bash
-docker pull tevinportfolio/docker-nodejs-app:latest
-```
-
-Run directly from Docker Hub:
-
-```bash
-docker run -d -p 3000:3000 tevinportfolio/docker-nodejs-app
-```
+![Docker Hub](Screenshots/docker%20repository.jpg)
 
 ---
 
-## Deployment Steps
-
-1. Launch an Ubuntu EC2 instance
-2. Configure Security Groups (Ports 22 and 3000)
-3. Connect using SSH
-4. Install Docker
-5. Create the Node.js application
-6. Build the Docker image
-7. Run the Docker container
-8. Verify the application
-9. Push the image to Docker Hub
-
----
-
-## Screenshots
-
-### Application Running
-
-![Application](screenshots/browser.png)
-
----
-
-### Docker Container
-
-![Docker Running](screenshots/docker-running.png)
-
----
-
-### Docker Hub Repository
-
-![Docker Hub](screenshots/dockerhub.png)
-
----
-
-### EC2 Instance
-
-![EC2](screenshots/ec2-instance.png)
-
----
-
-## Useful Docker Commands
+# Docker Commands Used
 
 Build image
 
 ```bash
 docker build -t docker-nodejs-app .
+```
+
+List images
+
+```bash
+docker images
 ```
 
 Run container
@@ -213,16 +241,10 @@ Run container
 docker run -d -p 3000:3000 --name node-app docker-nodejs-app
 ```
 
-List running containers
+View running containers
 
 ```bash
 docker ps
-```
-
-View logs
-
-```bash
-docker logs node-app
 ```
 
 Stop container
@@ -243,33 +265,31 @@ Remove container
 docker rm node-app
 ```
 
-Remove image
-
-```bash
-docker rmi docker-nodejs-app
-```
-
 ---
 
-## Skills Demonstrated
+## Learning Outcomes
 
-- Cloud Computing (AWS EC2)
-- Linux Administration
-- Docker Containerization
-- Node.js Deployment
-- Networking and Security Groups
-- Docker Hub Image Management
-- Git & GitHub Version Control
+This project demonstrates proficiency in:
+
+- Docker containerization
+- AWS EC2 deployment
+- Linux administration
+- Node.js application deployment
+- Git & GitHub version control
+- Docker networking
+- Infrastructure deployment
+- Cloud computing fundamentals
 
 ---
 
 ## Future Improvements
 
 - Deploy using Docker Compose
-- Configure Nginx as a reverse proxy
-- Add HTTPS using Let's Encrypt
-- Implement CI/CD with GitHub Actions
-- Deploy on Amazon ECS
+- Configure Nginx reverse proxy
+- Secure with HTTPS using Let's Encrypt
+- Implement GitHub Actions CI/CD
+- Push images automatically to Docker Hub
+- Deploy automatically after every GitHub push
 - Monitor containers with CloudWatch
 
 ---
@@ -278,12 +298,6 @@ docker rmi docker-nodejs-app
 
 **Tevin Omondi**
 
-- GitHub: https://github.com/tevinomondifreelance-design
-- Docker Hub: https://hub.docker.com/u/tevinportfolio
-- LinkedIn: *(Add your LinkedIn profile here)*
+Cloud & DevOps Engineer
 
----
-
-## License
-
-This project is licensed under the MIT License.
+GitHub: https://github.com/tevinomondifreelance-design
